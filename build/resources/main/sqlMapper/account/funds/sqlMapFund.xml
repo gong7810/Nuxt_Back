@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Generated at: THU DEC 14 09:48:32 KST 2023-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.seoulit.erp.account.funds.dao.FundDAO">
+
+    <resultMap id="DailyTradeStatusResult" type="kr.co.seoulit.erp.account.funds.to.DailyTradeStatusBean">
+        <result property="accountName" column="ACCOUNT_NAME"/>
+        <result property="previousBalance" column="PREVIOUS_BALANCE"/>
+        <result property="dayIncrease" column="DAY_INCREASE"/>
+        <result property="dayDecrease" column="DAY_DECREASE"/>
+        <result property="dayBalance" column="DAY_BALANCE"/>
+    </resultMap>
+
+    <parameterMap id="getDailyTradeStatusParam" type="map">
+        <parameter property="selectDate" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN"/>
+        <parameter property="ERROR_CODE" jdbcType="DECIMAL" javaType="java.lang.Integer" mode="OUT"/>
+        <parameter property="ERROR_MSG" jdbcType="VARCHAR" javaType="java.lang.String" mode="OUT"/>
+        <parameter property="RESULT" jdbcType="CURSOR" javaType="java.sql.ResultSet" mode="OUT" resultMap="DailyTradeStatusResult" />
+    </parameterMap>
+
+    <resultMap id="InoutExpectedPriceResult" type="kr.co.seoulit.erp.account.funds.to.InoutBean">
+        <result property="accountName" column="ACCOUNT_NAME"/>
+        <result property="expenseReport" column="EXPENSE_REPORT"/>
+        <result property="price" column="PRICE"/>
+    </resultMap>
+
+    <resultMap id="financeStatusResult" type="kr.co.seoulit.erp.account.funds.to.FinanceBean">
+        <result property="customerCode" column="CUSTOMER_CODE"/>
+        <result property="customerName" column="CUSTOMER_NAME"/>
+        <result property="accountNo" column="ACCOUNT_NO"/>
+        <result property="previousBalance" column="PREVIOUS_BALANCE"/>
+        <result property="increase" column="INCREASE"/>
+        <result property="decrease" column="DECREASE"/>
+        <result property="dayBalance" column="DAY_BALANCE"/>
+        <result property="limitBalance" column="LIMIT_BALANCE"/>
+    </resultMap>
+
+    <parameterMap id="getFinanceStatusParam" type="map">
+        <parameter property="selectDate" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN"/>
+        <parameter property="selectAccount" jdbcType="VARCHAR" javaType="java.lang.String" mode="IN"/>
+        <parameter property="ERROR_CODE" jdbcType="DECIMAL" javaType="java.lang.Integer" mode="OUT"/>
+        <parameter property="ERROR_MSG" jdbcType="VARCHAR" javaType="java.lang.String" mode="OUT"/>
+        <parameter property="RESULT" jdbcType="CURSOR" javaType="java.sql.ResultSet" mode="OUT" resultMap="financeStatusResult" />
+    </parameterMap>
+
+    <resultMap id="getGeneralFundStatusResult" type="kr.co.seoulit.erp.account.funds.to.GeneralFundBean">
+        <result property="indexNo" column="INDEX_NO"/>
+        <result property="accountName" column="ACCOUNT_NAME"/>
+        <result property="customerName" column="CUSTOMER_NAME"/>
+        <result property="previousBalance" column="PREVIOUS_BALANCE"/>
+        <result property="dayInout" column="DAY_INOUT"/>
+        <result property="dayBalance" column="DAY_BALANCE"/>
+    </resultMap>
+
+    <!-- 당일 마지막 계획번호 조회 -->
+    <select id="getPlanMaxNo" parameterType="String" resultType="String" >
+   <![CDATA[
+        SELECT
+            MAX(PLAN_NO)
+        FROM DAILY_FUND_PLAN
+        WHERE PLAN_NO LIKE '%'||#{today}||'%'
+        ]]>
+   </select>
+
+    <!-- 일자별자금계획 조회 -->
+    <select id="getDailyFundPlan" parameterType="map" resultType="kr.co.seoulit.erp.account.funds.to.PlanBean" >
+   <![CDATA[
+        SELECT PLAN_NO
+             , PLAN_DATE
+             , FUND_CODE
+             , FUND_NAME
+             , EXPENSE_REPORT
+             , CUSTOMER_CODE
+             , CUSTOMER_NAME
+             , BALANCE_DIVISION
+             , TO_CHAR(PRICE, 'FM999,999,999,999') AS PRICE
+        FROM DAILY_FUND_PLAN
+        WHERE BALANCE_DIVISION = #{balanceDivision}
+          AND PLAN_DATE BETWEEN #{startDate} AND #{endDate}
+        ]]>
+   </select>
+
+    <!-- 일자별자금계획 수정 -->
+    <update id="updateDailyFundPlan" parameterType="kr.co.seoulit.erp.account.funds.to.PlanBean">
+   <![CDATA[
+        UPDATE DAILY_FUND_PLAN
+            SET PLAN_DATE = #{planDate}
+              , FUND_CODE = #{fundCode}
+              , FUND_NAME = #{fundName}
+              , CUSTOMER_CODE = #{customerCode}
+              , CUSTOMER_NAME = #{customerName}
+              , EXPENSE_REPORT = #{expenseReport}
+              , PRICE = #{price}
+        WHERE PLAN_NO = #{planNo}
+        ]]>
+   </update>
+
+    <!-- 자금계획 카렌다 날짜별 수입조회 -->
+    <select id="getCalendarIncome" parameterType="String" resultType="String" >
+   <![CDATA[
+        SELECT TO_CHAR(SUM(PRICE)/1000, 'FM999,999,999,999') AS PRICE
+        FROM DAILY_FUND_PLAN
+        WHERE PLAN_DATE = #{day}
+          AND BALANCE_DIVISION = '수입'
+        ]]>
+   </select>
+
+    <!-- 자금계획 카렌다 날짜별 지출조회 -->
+    <select id="getCalendarExpenditure" parameterType="String" resultType="String" >
+   <![CDATA[
+        SELECT TO_CHAR(SUM(PRICE)/1000, 'FM999,999,999,999') AS PRICE
+        FROM DAILY_FUND_PLAN
+        WHERE PLAN_DATE = #{day}
+          AND BALANCE_DIVISION = '지출'
+        ]]>
+   </select>
+
+    <!-- 일일거래증감현황 조회 -->
+    <select id="getDailyTradeStatus" parameterMap="getDailyTradeStatusParam" statementType="CALLABLE">
+   <![CDATA[
+        {call P_DAILY_TRADE_STATUS(?, ?, ?, ?)}
+        ]]>
+   </select>
+
+    <!-- 입출금예정액 조회 -->
+    <select id="getInoutExpectedPrice" parameterType="map" resultMap="InoutExpectedPriceResult">
+   <![CDATA[
+        SELECT *
+        FROM (
+                 SELECT CAST(A.ACCOUNT_NAME AS VARCHAR2(50)) AS ACCOUNT_NAME
+                      , CAST(S.EXPENSE_REPORT AS VARCHAR2(50)) AS EXPENSE_REPORT
+                      , DECODE(J.BALANCE_DIVISION
+                          , '대변', TO_CHAR(J.RIGHT_CREDITS_PRICE, 'FM999,999,999,999')
+                          , '차변', TO_CHAR(J.LEFT_DEBTOR_PRICE, 'FM999,999,999,999')) AS PRICE
+                 FROM SLIP S
+                    , JOURNAL J
+                    , ACCOUNT A
+                 WHERE S.SLIP_NO = J.SLIP_NO
+                   AND J.ACCOUNT_INNER_CODE = A.ACCOUNT_CODE
+                   AND S.REPORTING_DATE = #{selectDate}
+                   AND J.BALANCE_DIVISION = #{balanceDivision}
+                 ORDER BY A.ACCOUNT_NAME)
+        UNION ALL
+        SELECT '[합 계]' AS ACCOUNT_NAME
+             , NULL AS EXPENSE_REPORT
+             , A.PRICE AS PRICE
+        FROM (
+             SELECT DECODE(J.BALANCE_DIVISION
+                , '대변', TO_CHAR(SUM(J.RIGHT_CREDITS_PRICE), 'FM999,999,999,999')
+                , '차변', TO_CHAR(SUM(J.LEFT_DEBTOR_PRICE), 'FM999,999,999,999')) AS PRICE
+             FROM SLIP S
+                , JOURNAL J
+                , ACCOUNT A
+             WHERE S.SLIP_NO = J.SLIP_NO
+               AND J.ACCOUNT_INNER_CODE = A.ACCOUNT_CODE
+               AND S.REPORTING_DATE = #{selectDate}
+               AND J.BALANCE_DIVISION = #{balanceDivision}
+             GROUP BY J.BALANCE_DIVISION) A
+        ]]>
+   </select>
+
+    <!-- 예적금현황 조회 -->
+    <select id="getFinanceStatus" parameterMap="getFinanceStatusParam" statementType="CALLABLE">
+   <![CDATA[
+        {call P_FINANCE_STATUS(?, ?, ?, ?, ?)}
+        ]]>
+   </select>
+
+    <!-- 총괄거래현황 조회 -->
+    <select id="getGeneralFundStatus" parameterType="map" resultMap="getGeneralFundStatusResult">
+   <![CDATA[
+        SELECT ROWNUM AS INDEX_NO
+             , TO_CHAR(A.ACCOUNT_NAME) AS ACCOUNT_NAME
+             , A.CUSTOMER_NAME AS CUSTOMER_NAME
+             , A.PREVIOUS_BALANCE AS PREVIOUS_BALANCE
+             , A.DAY_INOUT AS DAY_INOUT
+             , A.DAY_BALANCE AS DAY_BALANCE
+        FROM (
+                 SELECT A1.ACCOUNT_NAME AS ACCOUNT_NAME
+                      , C1.CUSTOMER_NAME AS CUSTOMER_NAME
+                      , NULL AS PREVIOUS_BALANCE
+                      , CASE WHEN SUM(J1.LEFT_DEBTOR_PRICE) - SUM(J1.RIGHT_CREDITS_PRICE) = 0
+                                 THEN NULL
+                             ELSE TO_CHAR(SUM(J1.LEFT_DEBTOR_PRICE) - SUM(J1.RIGHT_CREDITS_PRICE), 'FM999,999,999,999') END AS DAY_INOUT
+                      , CASE WHEN SUM(J1.LEFT_DEBTOR_PRICE) - SUM(J1.RIGHT_CREDITS_PRICE) = 0
+                                 THEN NULL
+                             ELSE TO_CHAR(SUM(J1.LEFT_DEBTOR_PRICE) - SUM(J1.RIGHT_CREDITS_PRICE), 'FM999,999,999,999') END AS DAY_BALANCE
+                 FROM SLIP S1
+                    , JOURNAL J1
+                    , CUSTOMER C1
+                    , ACCOUNT A1
+                 WHERE S1.SLIP_NO = J1.SLIP_NO
+                   AND J1.ACCOUNT_INNER_CODE = A1.ACCOUNT_CODE
+                   AND J1.CUSTOMER_CODE = C1.CUSTOMER_CODE
+                   AND A1.ACCOUNT_NAME IN ('단기차입금', '장기차입금', '정기예금', '정기적금')
+                   AND S1.REPORTING_DATE BETWEEN #{startDate} AND #{endDate}
+                 GROUP BY A1.ACCOUNT_NAME, C1.CUSTOMER_NAME
+                 ORDER BY A1.ACCOUNT_NAME, C1.CUSTOMER_NAME
+             ) A
+        UNION ALL
+        SELECT NULL AS INDEX_NO
+             , '[합 계]' AS ACCOUNT_NAME
+             , NULL AS CUSTOMER_NAME
+             , CASE WHEN T.PREVIOUS_BALANCE = 0
+                    THEN NULL
+                    ELSE TO_CHAR(T.PREVIOUS_BALANCE, 'FM999,999,999,999') END AS PREVIOUS_BALANCE
+             , CASE WHEN C.DAY_BALANCE = 0
+                    THEN NULL
+                    ELSE TO_CHAR(C.DAY_BALANCE, 'FM999,999,999,999') END AS DAY_INOUT
+             , CASE WHEN NVL(T.PREVIOUS_BALANCE,0) + NVL(C.DAY_BALANCE, 0) = 0
+                    THEN NULL
+                    ELSE TO_CHAR(NVL(T.PREVIOUS_BALANCE,0) + NVL(C.DAY_BALANCE, 0), 'FM999,999,999,999') END AS DAY_BALANCE
+        FROM (
+               SELECT SUM(J2.LEFT_DEBTOR_PRICE) - SUM(J2.RIGHT_CREDITS_PRICE) AS PREVIOUS_BALANCE
+               FROM SLIP S2
+                  , JOURNAL J2
+                  , ACCOUNT A2
+               WHERE S2.SLIP_NO = J2.SLIP_NO
+                 AND J2.ACCOUNT_INNER_CODE = A2.ACCOUNT_CODE
+                 AND A2.ACCOUNT_NAME IN ('단기차입금', '장기차입금', '정기예금', '정기적금')
+                 AND S2.REPORTING_DATE BETWEEN '2020-01-01' AND TO_CHAR(TO_DATE(#{startDate}, 'YYYY-MM-DD')-1, 'YYYY-MM-DD')
+            ) T,
+            (
+               SELECT SUM(J.LEFT_DEBTOR_PRICE) - SUM(J.RIGHT_CREDITS_PRICE) AS DAY_BALANCE
+               FROM SLIP S
+                  , JOURNAL J
+                  , CUSTOMER C
+                  , ACCOUNT A
+               WHERE S.SLIP_NO = J.SLIP_NO
+                 AND J.ACCOUNT_INNER_CODE = A.ACCOUNT_CODE
+                 AND J.CUSTOMER_CODE = C.CUSTOMER_CODE
+                 AND A.ACCOUNT_NAME IN ('단기차입금', '장기차입금', '정기예금', '정기적금')
+                 AND S.REPORTING_DATE BETWEEN #{startDate} AND #{endDate}
+            ) C
+        ]]>
+   </select>
+
+
+</mapper>

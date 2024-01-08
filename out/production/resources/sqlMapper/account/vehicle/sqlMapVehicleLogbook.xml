@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.seoulit.erp.account.vehicle.dao.VehicleLogbookDAO">
+
+    <resultMap id="VehicleLogbookResult" type="kr.co.seoulit.erp.account.vehicle.to.VehicleLogbookBean">
+        <result property="vehicleCode" column="VEHICLE_CODE"/>
+        <result property="useDate" column="USE_DATE"/>
+        <result property="startTime" column="START_TIME"/>
+        <result property="empCode" column="EMP_CODE"/>
+        <result property="empName" column="EMP_NAME"/>
+        <result property="deptCode" column="DEPT_CODE"/>
+        <result property="deptName" column="DEPT_NAME"/>
+        <result property="distance" column="DISTANCE"/>
+        <result property="businessDistance" column="BUSINESS_DISTANCE"/>
+        <result property="personalDistance" column="PERSONAL_DISTANCE"/>
+        <result property="beforeOdometer" column="BEFORE_ODOMETER"/>
+        <result property="afterOdometer" column="AFTER_ODOMETER" />
+        <result property="notes" column="NOTES" />
+    </resultMap>
+
+
+
+    <select id="selectVehicleLogbook" resultMap="VehicleLogbookResult">
+        <![CDATA[
+        SELECT
+            VEHICLE_CODE,
+            USE_DATE,
+            START_TIME,
+            EMP_CODE,
+            EMP_NAME,
+            DEPT_CODE,
+            DEPT_NAME,
+            DISTANCE,
+            BUSINESS_DISTANCE,
+            PERSONAL_DISTANCE,
+            BEFORE_ODOMETER,
+            AFTER_ODOMETER,
+            NOTES
+        FROM VEHICLE_LOGBOOK VL
+        WHERE VL.VEHICLE_CODE = #{vehicleCode}
+        ]]>
+    </select>
+
+
+    <select id="insertVehicleLogbook" parameterType="Map" resultMap="VehicleLogbookResult">
+        <![CDATA[
+        INSERT INTO VEHICLE_LOGBOOK (
+            VEHICLE_CODE,
+            USE_DATE,
+            START_TIME,
+            EMP_CODE,
+            EMP_NAME,
+            DEPT_CODE,
+            DEPT_NAME,
+            DISTANCE,
+            BUSINESS_DISTANCE,
+            PERSONAL_DISTANCE,
+            BEFORE_ODOMETER,
+            AFTER_ODOMETER,
+            NOTES
+        )
+        VALUES (
+            #{vehicleCode},
+            #{useDate},
+            #{startTime},
+            #{deptCode},
+            #{deptName},
+            #{empCode},
+            #{empName},
+            #{distance},
+            #{businessDistance},
+            #{personalDistance},
+            #{beforeOdometer},
+            #{afterOdometer},
+            #{notes}
+        )
+        ]]>
+    </select>
+
+    <delete id="deleteVehicleLogbook" parameterType="map">
+        DELETE FROM VEHICLE_LOGBOOK
+        WHERE VEHICLE_CODE=#{vehicleCode}
+        AND USE_DATE=#{useDate}
+    </delete>
+
+    <delete id="deleteVehicleLogbookList" parameterType="String">
+        DELETE FROM VEHICLE_LOGBOOK
+        WHERE VEHICLE_CODE=#{vehicleCode}
+    </delete>
+
+</mapper>

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Wed Feb 26 09:48:32 KST 2020-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.seoulit.erp.account.currentAsset.dao.CurrentAssetDAO">
+
+    <resultMap id="assetResult" type="kr.co.seoulit.erp.account.currentAsset.to.CurrentAssetBean">
+        <result property="accountCode" column="ACCOUNT_CODE"/>
+        <result property="accountName" column="ACCOUNT_NAME"/>
+        <result property="assetCode" column="ASSET_CODE"/>
+        <result property="assetName" column="ASSET_NAME"/>
+        <result property="progress" column="PROGRESS"/>
+        <result property="finalizeStatus" column="FINALIZE_STATUS"/>
+        <!--<collection property="currentAssetDetailBean" column="ASSET_CODE" javaType="ArrayList"  ofType="CurrentAssetDetailBean"
+       select="kr.co.seoulit.erp.account.currentAsset.dao.CurrentAssetDetailDAO.selectAssetDetail" />-->
+    </resultMap>
+
+
+    <resultMap id="assetTypeResult" type="kr.co.seoulit.erp.account.currentAsset.to.CurrentAssetDetailBean">
+        <result property="assetCode" column="ASSET_CODE"/>
+        <result property="acquisitionCost" column="acquistion_Cost"/>
+        <result property="depreciation" column="depreciation"/>
+        <result property="bookValue" column="book_Value"/>
+        <result property="amortizationWay" column="amortization_Way"/>
+        <result property="amortizationFinalYear" column="amortization_Final_Year"/>
+        <result property="usefulLife" column="usefulLife"/>
+        <result property="amortizationRate" column="amortization_Rate"/>
+        <result property="normalAmortization" column="normal_Amortization"/>
+        <result property="accumulatedAmortization" column="accumulated_Amortization"/>
+        <result property="bookValueEnd" column="book_ValueEnd"/>
+    </resultMap>
+
+
+
+    <resultMap id="depreciationResult" type="kr.co.seoulit.erp.account.currentAsset.to.CurrentAssetBean">
+        <result property="accountCode" column="ACCOUNT_CODE"/>
+        <result property="accountName" column="ACCOUNT_NAME"/>
+        <result property="assetCode" column="ASSET_CODE"/>
+        <result property="assetName" column="ASSET_NAME"/>
+        <result property="progress" column="PROGRESS"/>
+        <result property="acquisitionCost" column="acquistion_Cost"/>
+        <result property="depreciation" column="depreciation"/>
+        <result property="bookValue" column="book_Value"/>
+        <result property="normalAmortization" column="normal_Amortization"/>
+        <result property="accumulatedAmortization" column="accumulated_Amortization"/>
+        <result property="bookValueEnd" column="book_ValueEnd"/>
+        <result property="acquisitionQuantity" column="ACQUISITION_QUANTITY"/>
+        <result property="changeQuantity" column="CHANGE_QUANTITY"/>
+        <result property="remainQuantity" column="REMAIN_QUANTITY"/>
+    </resultMap>
+
+
+    <select id="selectCurrentAssetTypeList"  resultMap="assetTypeResult">
+     <![CDATA[
+        SELECT
+        *
+        FROM CURRENT_ASSET
+        ]]>
+    </select>
+
+    <select id="selectCurrentAssetListAll" resultMap="assetResult">
+        SELECT *
+        FROM CURRENT_ASSET
+        ORDER BY PROGRESS
+    </select>
+
+    <select id="selectCurrentAssetList" parameterType="map" resultMap="assetResult">
+      <![CDATA[
+        SELECT *
+        FROM CURRENT_asset
+        WHERE ACCOUNT_CODE=#{accountCode}
+          AND ACCOUNT_NAME=#{accountName}
+        ORDER BY PROGRESS
+        ]]>
+   </select>
+
+    <insert id="insertCurrentAsset" parameterType="Map" >
+    <![CDATA[
+        INSERT INTO CURRENT_asset(ACCOUNT_CODE,ACCOUNT_NAME,Asset_CODE,Asset_NAME,Progress,FINALIZE_STATUS)
+        VALUES (#{accountCode}
+               ,#{accountName}
+               ,#{assetCode}
+               ,#{assetName}
+               ,#{progress}
+               ,#{finalizeStatus}
+               )
+        ]]>
+    </insert>
+
+    <select id="selectNoncurrentAssetCount" parameterType="Map" resultType="int">
+  <![CDATA[
+        SELECT
+            COUNT(*)
+        FROM CURRENT_asset
+        WHERE ACCOUNT_CODE=#{accountCode}
+        ]]>
+  </select>
+    <delete id="deleteCurrentAsset" parameterType="String">
+   <![CDATA[
+        DELETE
+        FROM CURRENT_ASSET
+        WHERE asset_code = #{asset_code}
+        ]]>
+   </delete>
+
+    <update id="updateCurrentAsset" parameterType="Map" >
+    <![CDATA[
+        UPDATE CURRENT_ASSET
+        SET
+            ACCOUNT_CODE= #{accountCode}
+            ,ACCOUNT_NAME= #{accountName}
+            ,ASSET_NAME=#{assetName}
+            ,PROGRESS=#{progress}
+            ,FINALIZE_STATUS=#{finalizeStatus}
+        WHERE ASSET_CODE=#{assetCode}
+        ]]>
+    </update>
+
+
+
+    <!--    감가상각비현황 전체조회-->
+    <select id="depreciationList" resultMap="depreciationResult">
+      <![CDATA[
+                SELECT  A.ACCOUNT_CODE,
+                        A.ACCOUNT_NAME,
+                        TO_CHAR(sum(AD.ACQUISTION_COST), 'FM999,999,999,999') AS ACQUISTION_COST,
+                        TO_CHAR(sum(AD.DEPRECIATION), 'FM999,999,999,999') AS DEPRECIATION,
+                        TO_CHAR(sum(AD.BOOK_VALUE), 'FM999,999,999,999') AS BOOK_VALUE,
+                        TO_CHAR(sum(AD.NORMAL_AMORTIZATION), 'FM999,999,999,999') AS NORMAL_AMORTIZATION,
+                        TO_CHAR(sum(AD.ACCUMULATED_AMORTIZATION), 'FM999,999,999,999') AS ACCUMULATED_AMORTIZATION,
+                        TO_CHAR(sum(AD.BOOK_VALUEEND), 'FM999,999,999,999') AS BOOK_VALUEEND
+                FROM CURRENT_ASSET A,
+                     CURRENT_ASSET_DETAIL AD
+                WHERE A.ASSET_CODE = AD.ASSET_CODE
+                GROUP BY A.ACCOUNT_CODE, A.ACCOUNT_NAME
+      ]]>
+    </select>
+    <!--    감가상각비현황 선택조회-->
+    <select id="selectedDepreciationList" parameterType="String" resultMap="depreciationResult">
+    <![CDATA[
+        SELECT  A.ACCOUNT_CODE,
+                A.ACCOUNT_NAME,
+                A.ASSET_CODE,
+                A.ASSET_NAME,
+                TO_CHAR(sum(AD.ACQUISTION_COST), 'FM999,999,999,999') AS ACQUISTION_COST,
+                TO_CHAR(sum(AD.DEPRECIATION), 'FM999,999,999,999') AS DEPRECIATION,
+                TO_CHAR(sum(AD.BOOK_VALUE), 'FM999,999,999,999') AS BOOK_VALUE,
+                TO_CHAR(sum(AD.NORMAL_AMORTIZATION), 'FM999,999,999,999') AS NORMAL_AMORTIZATION,
+                TO_CHAR(sum(AD.ACCUMULATED_AMORTIZATION), 'FM999,999,999,999') AS ACCUMULATED_AMORTIZATION,
+                TO_CHAR(sum(AD.BOOK_VALUEEND), 'FM999,999,999,999') AS BOOK_VALUEEND
+        FROM CURRENT_ASSET A,
+             CURRENT_ASSET_DETAIL AD
+        WHERE A.ACCOUNT_CODE = #{accountCode}
+        AND A.ASSET_CODE = AD.ASSET_CODE
+        GROUP BY A.ACCOUNT_CODE, A.ACCOUNT_NAME, A.ASSET_CODE, A.ASSET_NAME
+        ]]>
+    </select>
+    <!--    고정자산관리대장 전체조회-->
+    <select id="fixedAssetLedgerList" resultMap="depreciationResult">
+      <![CDATA[
+        SELECT  DECODE(GROUPING_ID(A.ACCOUNT_CODE,
+                                A.ACCOUNT_NAME,
+                                A.ASSET_CODE,
+                                A.ASSET_NAME,
+                                A.PROGRESS), 7, null, A.ACCOUNT_CODE) AS ACCOUNT_CODE,
+                DECODE(GROUPING_ID(A.ACCOUNT_CODE,
+                                A.ACCOUNT_NAME,
+                                A.ASSET_CODE,
+                                A.ASSET_NAME,
+                                A.PROGRESS), 7, '[ ' || ACCOUNT_NAME || ' 소계 ]', A.ACCOUNT_NAME) AS ACCOUNT_NAME,
+                A.ASSET_CODE,
+                A.ASSET_NAME,
+                A.PROGRESS,
+                TO_CHAR(sum(AD.ACQUISTION_COST), 'FM999,999,999,999') AS ACQUISTION_COST,
+                TO_CHAR(sum(AD.DEPRECIATION), 'FM999,999,999,999') AS DEPRECIATION,
+                TO_CHAR(sum(AD.BOOK_VALUE), 'FM999,999,999,999') AS BOOK_VALUE,
+                TO_CHAR(sum(AD.NORMAL_AMORTIZATION), 'FM999,999,999,999') AS NORMAL_AMORTIZATION,
+                TO_CHAR(sum(AD.ACCUMULATED_AMORTIZATION), 'FM999,999,999,999') AS ACCUMULATED_AMORTIZATION,
+                TO_CHAR(sum(AD.BOOK_VALUEEND), 'FM999,999,999,999') AS BOOK_VALUEEND
+        FROM CURRENT_ASSET A,
+             CURRENT_ASSET_DETAIL AD
+        WHERE A.ASSET_CODE = AD.ASSET_CODE
+        GROUP BY ROLLUP (A.ACCOUNT_CODE,
+                         A.ACCOUNT_NAME,
+                         A.ASSET_CODE,
+                         A.ASSET_NAME,
+                         A.PROGRESS)
+        HAVING GROUPING_ID(A.ACCOUNT_CODE,
+                           A.ACCOUNT_NAME,
+                           A.ASSET_CODE,
+                           A.ASSET_NAME,
+                           A.PROGRESS) IN (0, 7)
+
+        ORDER BY A.ACCOUNT_CODE, A.PROGRESS
+        ]]>
+    </select>
+</mapper>

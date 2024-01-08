@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Wed Feb 26 09:48:31 KST 2020-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.seoulit.erp.account.statement.dao.RetainedEarningsStatementDAO">
+
+    <resultMap id="RetainedEarningsStatementResult" type="kr.co.seoulit.erp.account.statement.to.RetainedEarningsStatementBean">
+        <result property="currentYear" column="CURRENT_YEAR" />
+        <result property="earnings" column="EARNINGS"  />
+        <result property="earningsSummary" column="EARNINGS_SUMMARY"  />
+        <result property="accountName" column="ACCOUNT_NAME"  />
+        <result property="fiscalYear" column="FISCAL_YEAR" />
+        <result property="earlyEarnings" column="RETAINED_EARNINGS"  />
+        <result property="earlyEarningsSummary" column="EARLY_EARNINGS_SUMMARY"  />
+    </resultMap>
+
+    <select id="selectRetainedEarningsList" parameterType="map" resultMap="RetainedEarningsStatementResult">
+        <![CDATA[
+            SELECT * FROM RETAINED_EARNINGS
+        ]]>
+        </select>
+
+</mapper>
